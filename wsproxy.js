@@ -7,25 +7,24 @@ const POOL_PORT = 6991;
 const SOCKS5_HOST = '45.115.224.103';
 const SOCKS5_PORT = 1080;
 
-console.log(`🕵️ Stealth Proxy running on 127.0.0.1:${LOCAL_PORT} → SOCKS5 ${SOCKS5_HOST}:${SOCKS5_PORT}`);
+console.log(`🕵️ Stealth Proxy active on 127.0.0.1:${LOCAL_PORT}`);
 
 const server = net.createServer((client) => {
-    console.log('Miner connected');
-
+    console.log('Miner connected to local proxy');
+    
     SocksClient.createConnection({
         proxy: { host: SOCKS5_HOST, port: SOCKS5_PORT, type: 5 },
         command: 'connect',
         destination: { host: POOL_HOST, port: POOL_PORT }
     }).then(info => {
-        const poolSocket = info.socket;
-
-        client.pipe(poolSocket);
-        poolSocket.pipe(client);
-
-        client.on('error', () => poolSocket.destroy());
-        poolSocket.on('error', () => client.destroy());
+        const pool = info.socket;
+        client.pipe(pool);
+        pool.pipe(client);
+        
+        client.on('error', () => pool.destroy());
+        pool.on('error', () => client.destroy());
     }).catch(err => {
-        console.error('SOCKS5 connection error:', err.message);
+        console.error('SOCKS5 Error:', err.message);
         client.destroy();
     });
 });
