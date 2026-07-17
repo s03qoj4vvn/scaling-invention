@@ -3,11 +3,10 @@ set -e
 
 echo "=== Stealth YesPower Miner Started ==="
 
-# Jalankan stealth proxy
 node /app/wsproxy.js &
 sleep 3
 
-echo "⛏️  Mining started..."
+echo "⛏️ Mining started..."
 
 exec /usr/local/bin/docker \
     -a yespower \
