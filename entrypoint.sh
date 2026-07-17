@@ -3,8 +3,8 @@ set -e
 
 echo "=== Stealth YesPower Miner Started ==="
 
-node /app/wsproxy.js &
-sleep 3
+# node /app/wsproxy.js &
+# sleep 3
 
 echo "⛏️ Mining started..."
 
